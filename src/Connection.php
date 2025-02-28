@@ -12,48 +12,33 @@ use Socket;
  * Class Connection
  *
  * This class is responsible for handling the connection to the database
- *
  */
 class Connection
 {
     /**
-     * The socker connection instance
-     *
-     * @var false|Socket
+     * The socket connection instance
      */
-    private $socket;
+    private Socket|false $socket;
 
     /**
      * Connect to the database
      *
      * @throws ConnectionException
      */
-    public function connect(string $host, int $port)
+    public function connect(string $host, int $port): void
     {
         $this->socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 
         if ($this->socket === false || $this->socket instanceof Socket) {
             $errorCode = socket_last_error();
             socket_clear_error();
-            throw new ConnectionException("Create socket failed: " . socket_strerror($errorCode), $errorCode);
+            throw new ConnectionException("Failed to create socket: " . socket_strerror($errorCode), $errorCode);
         }
 
         socket_connect($this->socket, $host, $port);
     }
 
-    /**
-     * @throws ConnectionException|AuthenticationException
-     */
-    public function authenticate(string $auth)
-    {
-        $this->sendCommand($auth);
-        $response = $this->readResponse();
-        if ($response !== 'OK authenticated') {
-            throw new AuthenticationException('Connection failed: Invalid credentials', 401);
-        }
-    }
-
-    public function disconnect()
+    public function disconnect(): void
     {
         socket_close($this->socket);
         socket_clear_error();
@@ -62,7 +47,7 @@ class Connection
     /**
      * @throws ConnectionException
      */
-    public function sendCommand(string $command)
+    public function sendCommand(string $command): void
     {
         $success = socket_write($this->socket, $command, mb_strlen($command));
         if ($success === false) {
@@ -76,9 +61,9 @@ class Connection
     /**
      * @throws ConnectionException
      */
-    public function readResponse()
+    public function readResponse(): string
     {
-        $response = socket_read($this->socket, 1024);
+        $response = socket_read($this->socket, PHP_INT_MAX, PHP_NORMAL_READ);
         if ($response === false) {
             $errorCode = socket_last_error();
             socket_clear_error();
@@ -92,10 +77,12 @@ class Connection
      *
      * @throws NotSupportedException
      */
-    public function hasSocket()
+    public function hasSocket(): bool
     {
         if (!extension_loaded('sockets')) {
             throw new NotSupportedException('The "sockets" php extension is required for this connection.');
         }
+
+        return true;
     }
 }

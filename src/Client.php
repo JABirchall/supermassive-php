@@ -8,6 +8,8 @@ use Jabirchall\Supermassive\Exceptions\NotSupportedException;
 
 /**
  * Class Client
+ *
+ * @method string Authenticate(string $username, string $password)
  */
 class Client
 {
@@ -39,7 +41,9 @@ class Client
      * The port to connect to the database
      * 4000
      */
-    private int $port = 4000;
+    private int $port;
+
+    private CommandRouter $commandRouter;
 
     /**
      * Create a Connection instance
@@ -54,8 +58,8 @@ class Client
      * </code>
      */
     public function __construct(
-        string $host = "127.0.0.1",
-        int $port = 4000,
+        string $host,
+        int $port,
         string $username,
         string $password
     )
@@ -64,6 +68,8 @@ class Client
         $this->port = $port;
         $this->username = $username;
         $this->password = $password;
+        $this->commandRouter = new CommandRouter;
+        $this->connection = new Connection;
     }
 
     /**
@@ -77,20 +83,36 @@ class Client
      *     $supermassive->connect();
      * </code>
      */
-    public function connect()
+    public function connect(): void
     {
         if(empty($this->username) || empty($this->password)) {
             throw new AuthenticationException('Username and password are required to connect to a supermassive database');
         }
 
-        $this->connection = new Connection;
         $this->connection->hasSocket();
         $this->connection->connect($this->host, $this->port);
-        $this->connection->authenticate(base64_encode($this->username . '\n' . $this->password));
+        $this->commandRouter->setConnection($this->connection);
+
+        $response = $this->Authenticate($this->username, $this->password);
+        if ($response !== 'OK authenticated') {
+            throw new AuthenticationException('Connection failed: Invalid credentials', 401);
+        }
     }
 
-    public function disconnect()
+    public function disconnect(): void
     {
         $this->connection->disconnect();
+    }
+
+    /**
+     * @throws NotSupportedException|ConnectionException
+     */
+    public function __call($commandID, $arguments): string
+    {
+        if (!$this->commandRouter->isSupported($commandID)) {
+            throw new NotSupportedException("Command [$commandID] is not supported");
+        }
+
+        return $this->commandRouter->executeCommand($commandID, $arguments);
     }
 }
