@@ -1,18 +1,22 @@
 {
-    "name": "jabirchall/supermassive-php",
-    "description": "A PHP SDK for the supermassive key-value database.",
-    "type": "library",
-    "autoload": {
-        "psr-4": {
-            "Jabirchall\\Supermassive\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Jake Birchall",
-            "email": "JABirchall@users.noreply.github.com"
-        }
-    ],
-    "minimum-stability": "stable",
-    "require": {}
+  "name": "jabirchall/supermassive-php",
+  "description": "A PHP SDK for the supermassive key-value database.",
+  "type": "library",
+  "readme": "README.md",
+  "autoload": {
+    "psr-4": {
+      "Jabirchall\\Supermassive\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Jake Birchall",
+      "email": "JABirchall@users.noreply.github.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "php": "^8.0",
+    "ext-mbstring": "*"
+  }
 }
